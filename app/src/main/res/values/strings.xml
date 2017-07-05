@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Tap\'n\'Get</string>
+    <string name="action_settings">Settings</string>
+
+
+    <!--Preferences-->
+    <string name="myPref">tapngetUserData</string>
+    <string name="myPrefUserName">userName</string>
+    <string name="myPrefPassword">password</string>
+    <string name="myPrefCollegeID">college_id</string>
+    <string name="myPrefEmail">email</string>
+    <string name="myPrefNumber">number</string>
+    <string name="myPrefCredit">balance</string>
+
+
+    <string name="sign_up_text"><![CDATA[<i>Don\'t have an account?  </i><u><b>Sign Up Here!</b></u>]]></string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_main">MainActivity</string>
+</resources>

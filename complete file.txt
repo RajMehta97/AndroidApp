@@ -1,0 +1,1698 @@
+package com.justbyte.tapnget;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+
+public class BackgroundTask extends AsyncTask<String,Void,String> {
+
+    Context ctx;
+    BackgroundTask(Context ctx){
+        this.ctx=ctx;
+    }
+    String uname,pwd;
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    @Override
+    protected String doInBackground(String... params) {
+
+        String line="",response=null;
+        String reg_url= "http://www.tapnget.co.in/register.php";
+        String login_url= "http://www.tapnget.co.in/login.php";
+        String method = params[0];
+        if(method.equals("Register")){
+
+            uname=params[1];
+            String clgid=params[2];
+            String num=params[3];
+            String pass=params[4];
+
+            try {
+                URL url = new URL(reg_url);
+                HttpURLConnection httpURLConnection =(HttpURLConnection)url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setDoInput(true);
+                OutputStream OS = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(OS,"UTF-8"));
+                String data = URLEncoder.encode("user_username","UTF-8")+"="+URLEncoder.encode(uname,"UTF-8")+"&"+
+                        URLEncoder.encode("user_college_id","UTF-8")+"="+URLEncoder.encode(clgid,"UTF-8")+"&"+
+                        URLEncoder.encode("user_number","UTF-8")+"="+URLEncoder.encode(num,"UTF-8")+"&"+
+                        URLEncoder.encode("user_password","UTF-8")+"="+URLEncoder.encode(pass,"UTF-8");
+                bufferedWriter.write(data);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                OS.close();
+                InputStream IS = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS,"iso-8859-1"));
+                while ((line = bufferedReader.readLine())!=null){
+                    response+=line;
+                }
+
+                IS.close();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        else if(method.equals("Login")){
+            uname = params[1];
+            pwd = params[2];
+
+            try {
+                URL url = new URL(login_url);
+                HttpURLConnection httpURLConnection =(HttpURLConnection)url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setDoInput(true);
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+
+                String data = URLEncoder.encode("user_user_name","UTF-8")+"="+URLEncoder.encode(uname,"UTF-8")+"&"+
+                        URLEncoder.encode("user_user_password","UTF-8")+"="+URLEncoder.encode(pwd,"UTF-8");
+
+                bufferedWriter.write(data);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+
+                InputStream IS = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS,"iso-8859-1"));
+                while ((line = bufferedReader.readLine())!=null){
+                    response+=line;
+                }
+
+                bufferedReader.close();
+                IS.close();
+                httpURLConnection.disconnect();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return response;
+    }
+
+    @Override
+    protected void onProgressUpdate(Void... values)
+    {
+        super.onProgressUpdate(values);
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+        if(result.equals("nullRegistration Success")){
+            Toast.makeText(ctx,"Registration Success...",Toast.LENGTH_LONG).show();
+        }
+        else if(result.equals("nullLogin Failed... Try again!")){
+            Toast.makeText(ctx,"Login Failed Try again!",Toast.LENGTH_LONG).show();
+
+        }
+
+        else if(result.equals("nullLogin Success...")){
+            Toast.makeText(ctx,"Login Success...",Toast.LENGTH_LONG).show();
+            Intent i = new Intent(ctx, MainActivity.class);
+            i.putExtra("1stmssg",uname);
+            i.putExtra("2ndmssg",pwd);
+            ctx.startActivity(i);
+
+        }
+        else if(result.equals("nullRegistration Failed. User Exists"))
+            Toast.makeText(ctx,"Registration Failed. User Exists.\nPlease Try Again!",Toast.LENGTH_SHORT).show();
+    }
+}
+package com.justbyte.tapnget;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+public class Balance extends Fragment {
+
+    View view;
+
+    public Balance(){
+
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        view = inflater.inflate(R.layout.fragment_balance, container, false);
+
+        TextView balance = (TextView)view.findViewById(R.id.balance_credits);
+        balance.setText(getData(getString(R.string.myPrefCredit)));
+        return view;
+    }
+
+    private String getData(String dataTitle){
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        return sharedPreferences.getString(dataTitle,"");
+    }
+}
+import android.view.View;
+
+/package com.justbyte.tapnget;
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Typeface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.Html;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import com.justbyte.tapnget.R;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+
+
+public class LoginActivity extends AppCompatActivity {
+
+    Button login;
+    EditText username;
+    EditText password;
+    TextView signUp, forgot_password;
+    String uname,pwd;
+    ViewGroup viewGroup;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+
+        viewGroup = (ViewGroup) ((ViewGroup) this.findViewById(android.R.id.content)).getChildAt(0);
+
+        login      = (Button)findViewById(R.id.button);
+        username   = (EditText)findViewById(R.id.login_id);
+        password   = (EditText)findViewById(R.id.login_password);
+        signUp     = (TextView)findViewById(R.id.login_singUp);
+        forgot_password = (TextView)findViewById(R.id.forgot_password_link);
+        TextInputLayout textInputLayout = (TextInputLayout)findViewById(R.id.login_tilPassword);
+
+
+        signUp.setText(Html.fromHtml(getString(R.string.sign_up_text)));
+        textInputLayout.setTypeface(Typeface.DEFAULT);
+
+
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (!(networkInfo!=null && networkInfo.isConnected())) {
+            signUp.setEnabled(false);
+            login.setEnabled(false);
+
+            Snackbar.make(viewGroup,"No Internet Access. Please try again",Snackbar.LENGTH_SHORT).show();
+        }
+
+        signUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                register(v);
+            }
+        });
+
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                login(v);
+            }
+        });
+
+
+    }
+
+    public void register (View view){
+        Intent i = new Intent(this,Register.class);
+        startActivity(i);
+    }
+
+    public void login(View view){
+        uname = username.getText().toString();
+        pwd = password.getText().toString();
+
+        if(uname.isEmpty() || pwd.isEmpty()){
+            Snackbar.make(viewGroup, "Please enter credentials", Snackbar.LENGTH_SHORT).show();
+        }
+        else {
+            String method = "Login";
+
+            BackgroundTask backgroundtask = new BackgroundTask(this);
+            backgroundtask.execute(method, uname, pwd);
+        }
+
+    }
+
+    public void onclickforgotpassword(View view) {
+
+        Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto","tapnget.co.in@gmail.com",null));
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT,"PASSWORD RESET");
+        emailIntent.putExtra(Intent.EXTRA_TEXT,"Kindly Reset My Password(make sure you are sending this email from your college gmail account in order for us to confirm that this is really you) \n\n College_id: \n");
+        startActivity(Intent.createChooser(emailIntent,"Send Mail"));
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_login, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+package com.justbyte.tapnget;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.gigamole.library.navigationtabstrip.NavigationTabStrip;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class MainActivity extends AppCompatActivity {
+
+    private ViewPager viewPager;
+    private NavigationTabStrip nts;
+    String mssguser,mssgpwd,username,college_id,number,password,credit;
+
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        nts = (NavigationTabStrip)findViewById(R.id.nts_center);
+
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        setupViewPager(viewPager);
+
+        nts.setViewPager(viewPager);
+
+        Bundle data = getIntent().getExtras();
+
+        mssguser = data.getString("1stmssg");
+        mssgpwd = data.getString("2ndmssg");
+
+
+        new GetUserData().execute();
+    }
+
+
+    private void setupViewPager(ViewPager viewPager) {
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        adapter.addFragment(new Upload(), "Upload");
+        adapter.addFragment(new Balance(), "Balance");
+        adapter.addFragment(new Settings(), "Settings");
+        viewPager.setAdapter(adapter);
+    }
+
+    class ViewPagerAdapter extends FragmentPagerAdapter{
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
+
+        public ViewPagerAdapter(FragmentManager manager) {
+            super(manager);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return mFragmentList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mFragmentList.size();
+        }
+
+        public void addFragment(Fragment fragment, String title) {
+            mFragmentList.add(fragment);
+            mFragmentTitleList.add(title);
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitleList.get(position);
+            // to display icons return null;
+        }
+    }
+
+    class GetUserData extends AsyncTask<String,Void,String> {
+
+        String json_url;
+        String myJSON;
+
+        JSONArray data = new JSONArray();
+
+        @Override
+        protected void onPreExecute() {
+            json_url="http://www.tapnget.co.in/jsonretrieve.php";
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            String line="", response = null;
+            try {
+                URL url = new URL(json_url);
+
+                HttpURLConnection httpURLConnection =(HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setDoInput(true);
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+
+                String data = URLEncoder.encode("user_user_name", "UTF-8")+"="+URLEncoder.encode(mssguser,"UTF-8")+"&"+
+                        URLEncoder.encode("user_user_password","UTF-8")+"="+URLEncoder.encode(mssgpwd,"UTF-8");
+
+                bufferedWriter.write(data);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+
+                InputStream IS = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS,"iso-8859-1"));
+                while ((line = bufferedReader.readLine())!=null){
+                    response+=line;
+                }
+
+                IS.close();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if(response!=null) {
+                response = response.substring(4);
+            }
+            return response;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+
+            super.onPostExecute(s);
+            myJSON = s;
+
+            try{
+                JSONObject jsonObj = new JSONObject(myJSON);
+                data = jsonObj.getJSONArray("server_response");
+
+                for (int i = 0; i < data.length(); i++) {
+                    JSONObject jsonObject = data.getJSONObject(i);
+
+                    username = jsonObject.getString("username");
+                    college_id = jsonObject.getString("college_id");
+                    number = jsonObject.getString("number");
+                    password = jsonObject.getString("password");
+                    credit = jsonObject.getString("balance");
+
+                    saveData(getString(R.string.myPrefUserName),username);
+                    saveData(getString(R.string.myPrefCollegeID),college_id);
+                    saveData(getString(R.string.myPrefNumber),number);
+                    saveData(getString(R.string.myPrefCredit), credit);
+                    saveData(getString(R.string.myPrefPassword), password);
+
+                    Log.e("N",number);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveData(String dataTitle, String dataValue){
+        SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+
+        edit.putString(dataTitle, dataValue);
+        edit.apply();
+    }
+
+    private String getData(String dataTitle){
+        SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        return sharedPreferences.getString(dataTitle,"");
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
+package com.justbyte.tapnget;
+
+import android.content.Intent;
+import android.graphics.Typeface;
+import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class Register extends AppCompatActivity {
+
+    EditText username,college_id,number,password;
+    String   uname,clgid,num,pass;
+    Button   register;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+
+        username   = (EditText)findViewById(R.id.register_username);
+        college_id = (EditText)findViewById(R.id.register_college_id);
+        number     = (EditText)findViewById(R.id.register_number);
+        password   = (EditText)findViewById(R.id.register_password);
+        register = (Button)findViewById(R.id.register_button);
+
+        TextInputLayout textInputLayout = (TextInputLayout)findViewById(R.id.register_tilPassword);
+        textInputLayout.setTypeface(Typeface.DEFAULT);
+
+
+
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
+
+        ActionBar ab = getSupportActionBar();
+        if(ab!=null) {
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
+
+        Typeface myTypeface = Typeface.createFromAsset(getAssets(), "fonts/paname.ttf");
+        TextView welcome = (TextView)findViewById(R.id.register_welcomeText);
+        welcome.setTypeface(myTypeface);
+
+        register.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!(username.getText().toString().trim().isEmpty() ||
+                        college_id.getText().toString().trim().isEmpty() ||
+                        number.getText().toString().trim().isEmpty() ||
+                        password.getText().toString().trim().isEmpty())){
+
+                    onClickRegisterButton(v);
+                }
+            }
+        });
+
+
+    }
+
+    public void onClickRegisterButton(View view){
+
+        uname = username.getText().toString();
+        clgid = college_id.getText().toString() ;
+        num   = number.getText().toString();
+        pass  = password.getText().toString();
+
+        String method="Register";
+
+        if(clgid.toLowerCase().contains("@mnit.ac.in")){
+            clgid = clgid.toLowerCase().replace("@mnit.ac.in","");
+            clgid = clgid.toUpperCase();
+        }
+
+        BackgroundTask backgroundTask = new BackgroundTask(this);
+        backgroundTask.execute(method,uname,clgid,num,pass);
+        finish();
+    }
+}
+package com.justbyte.tapnget;
+
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.Layout;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+
+public class Settings extends Fragment {
+
+    View view;
+
+    EditText userName, phone, email;
+    Button save, updatePassword;
+
+
+    String newUserName;
+    String newPhone;
+    String newPasswordString;
+
+    String userPassword;
+    String userCollegeID;
+
+
+    public Settings() {
+
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        view = inflater.inflate(R.layout.fragment_settings, container, false);
+
+        userName = (EditText) view.findViewById(R.id.settings_userName);
+        phone = (EditText) view.findViewById(R.id.settings_phone);
+        email = (EditText) view.findViewById(R.id.settings_email);
+        save = (Button) view.findViewById(R.id.settings_save);
+        updatePassword = (Button) view.findViewById(R.id.settings_password);
+
+        userName.setText(getData(getString(R.string.myPrefUserName)));
+        phone.setText(getData(getString(R.string.myPrefNumber)));
+        email.setText(getData(getString(R.string.myPrefCollegeID)) + "@mnit.ac.in");
+
+        userPassword = getData(getString(R.string.myPrefPassword));
+        userCollegeID = getData(getString(R.string.myPrefCollegeID));
+
+        email.setFocusable(false);
+        save.setEnabled(false);
+        save.setBackgroundColor(Color.GRAY);
+
+        userName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                save.setEnabled(true);
+                save.setBackgroundColor(getResources().getColor(R.color.accent));
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        phone.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+
+                save.setEnabled(true);
+                save.setBackgroundColor(getResources().getColor(R.color.accent));
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                newUserName = userName.getText().toString();
+                newPhone    = phone.getText().toString();
+
+                UPDATEDATA updatedata =  new UPDATEDATA();
+                updatedata.execute();
+
+                save.setEnabled(false);
+                save.setBackgroundColor(Color.GRAY);
+
+            }
+        });
+
+        updatePassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                final View view = v;
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                LayoutInflater inflater1 = getActivity().getLayoutInflater();
+
+                final View dialogView = inflater1.inflate(R.layout.password_dialog, null);
+
+                builder.setView(dialogView);
+                builder.setTitle("Update Password");
+                builder.setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        EditText dialogCurrPassword = (EditText) dialogView.findViewById(R.id.update_currPassword);
+                        EditText dialogNewPassword = (EditText) dialogView.findViewById(R.id.update_newPassword);
+                        EditText dialogCNewPassword = (EditText) dialogView.findViewById(R.id.update_cNewPassword);
+
+                        if (dialogNewPassword.getText().toString().equals(dialogCNewPassword.getText().toString())) {
+                            if (dialogCurrPassword.getText().toString().equals(getData(getString(R.string.myPrefPassword)))) {
+                                newPasswordString = dialogNewPassword.getText().toString();
+                                new UPDATEPASSWORD().execute();
+                            } else {
+                                Snackbar.make(view, "Incorrect password entered. Try again!", Snackbar.LENGTH_LONG).show();
+                            }
+                        } else {
+                            Snackbar.make(view, "Passwords don't match. Try again!", Snackbar.LENGTH_LONG).show();
+
+                        }
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+            }
+        });
+        return view;
+    }
+
+
+    private void saveData(String dataTitle, String dataValue) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+
+        edit.putString(dataTitle, dataValue);
+        edit.apply();
+    }
+
+    private String getData(String dataTitle) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        return sharedPreferences.getString(dataTitle, "");
+    }
+
+
+    private void updateData(boolean check) {
+
+        if (check) {
+            saveData(getString(R.string.myPrefUserName), userName.getText().toString());
+            saveData(getString(R.string.myPrefNumber), phone.getText().toString());
+
+            Snackbar.make(view, "Details have been updated!", Snackbar.LENGTH_LONG).show();
+
+        } else{
+            userName.setText(getData(getString(R.string.myPrefUserName)));
+            phone.setText(getData(getString(R.string.myPrefNumber)));
+
+            Snackbar.make(view, "Unable to update details. Please try later!", Snackbar.LENGTH_LONG).show();
+        }
+
+    }
+
+    private void updatePassword(boolean check){
+
+        if(check){
+            saveData(getString(R.string.myPrefPassword), newPasswordString);
+
+            Snackbar.make(view, "Password has been updated!", Snackbar.LENGTH_LONG).show();
+        } else{
+            Snackbar.make(view, "Unable to update password. Please try later!", Snackbar.LENGTH_LONG).show();
+        }
+
+    }
+
+
+    class UPDATEDATA extends AsyncTask<String, Void, String> {
+
+        String line="", response = null;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            String updateData_url = "http://www.tapnget.co.in/update_data.php";
+
+            try {
+                   URL url = new URL(updateData_url);
+                   HttpURLConnection httpURLConnection =(HttpURLConnection) url.openConnection();
+                   httpURLConnection.setRequestMethod("POST");
+                   httpURLConnection.setDoOutput(true);
+                   httpURLConnection.setDoInput(true);
+                   OutputStream outputStream = httpURLConnection.getOutputStream();
+                   BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+
+                   String data = URLEncoder.encode("user_user_name","UTF-8")+"="+URLEncoder.encode(userCollegeID,"UTF-8")+"&"+
+                           URLEncoder.encode("user_user_password","UTF-8")+"="+URLEncoder.encode(userPassword,"UTF-8")+"&"+
+                           URLEncoder.encode("name","UTF-8")+"="+URLEncoder.encode(newUserName,"UTF-8")+"&"+
+                           URLEncoder.encode("user_number","UTF-8")+"="+URLEncoder.encode(newPhone,"UTF-8");
+
+                   bufferedWriter.write(data);
+                   bufferedWriter.flush();
+                   bufferedWriter.close();
+                   outputStream.close();
+
+                   InputStream IS = httpURLConnection.getInputStream();
+                   BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS,"iso-8859-1"));
+                   while ((line = bufferedReader.readLine())!=null){
+                       response+=line;
+                   }
+
+                   bufferedReader.close();
+                   IS.close();
+                   httpURLConnection.disconnect();
+
+               } catch (MalformedURLException e) {
+                   e.printStackTrace();
+               } catch (IOException e) {
+                   e.printStackTrace();
+               }
+
+            return response;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Boolean check = false;
+
+            if (s.equals("nullUPDATED\t")){
+                check = true;
+            }
+            else if(s.equals("nullCould not Update\t")){
+                check= false;
+            }
+
+            updateData(check);
+        }
+    }
+
+    class UPDATEPASSWORD extends AsyncTask<String, Void, String> {
+
+        String line="", response = null;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            String updatepwd_url = "http://www.tapnget.co.in/update_password.php";
+
+            try {
+                URL url = new URL(updatepwd_url);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setDoInput(true);
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+
+                String data = URLEncoder.encode("user_user_name", "UTF-8") + "=" + URLEncoder.encode(userCollegeID, "UTF-8") + "&" +
+                        URLEncoder.encode("user_user_password", "UTF-8") + "=" + URLEncoder.encode(newPasswordString, "UTF-8");
+
+                bufferedWriter.write(data);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+
+                InputStream IS = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS, "iso-8859-1"));
+                while ((line = bufferedReader.readLine()) != null) {
+                    response += line;
+                }
+
+                bufferedReader.close();
+                IS.close();
+                httpURLConnection.disconnect();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return response;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+
+            boolean check = false;
+
+            if (s.equals("nullUPDATED")){
+                check = true;
+            }
+            else if(s.equals("nullCould not Update")){
+                check= false;
+            }
+
+            updatePassword(check);
+        }
+    }
+
+}
+
+package com.justbyte.tapnget;
+
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.*;
+import android.provider.Settings;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.util.Base64;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+
+public class Upload extends Fragment {
+
+    View view;
+    Button b;
+    FloatingActionButton fabDevice, fabScan;
+    private boolean FAB_Status = false;
+
+    Animation show_fab_1;
+    Animation hide_fab_1;
+    Animation show_fab_2;
+    Animation hide_fab_2;
+
+    public Upload(){
+
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+
+        if (this.isVisible()) {
+            FAB_Status = false;
+            if (!isVisibleToUser) {
+                hideFAB();
+            }
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        view = inflater.inflate(R.layout.fragment_upload, container, false);
+
+        b = (Button)view.findViewById(R.id.b);
+        fabDevice = (FloatingActionButton)view.findViewById(R.id.upload_fab_device);
+        fabScan = (FloatingActionButton)view.findViewById(R.id.upload_fab_scan);
+
+        show_fab_1 = AnimationUtils.loadAnimation(getContext(), R.anim.b1_show);
+        hide_fab_1 = AnimationUtils.loadAnimation(getContext(), R.anim.b1_hide);
+        show_fab_2 = AnimationUtils.loadAnimation(getContext(), R.anim.b2_show);
+        hide_fab_2 = AnimationUtils.loadAnimation(getContext(), R.anim.b2_hide);
+
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                expandFAB();
+            }
+        });
+
+        fabDevice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.setType("application/pdf");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(intent,"Select Document"),1);
+            }
+        });
+
+        fabScan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "Scan", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+        return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Uri uri = null;
+        if (requestCode == 1 && resultCode == getActivity().RESULT_OK && data != null && data.getData() != null) {
+
+            uri = data.getData();
+            String uriString = uri.toString();
+            File myFile= null;
+            String encode = "";
+            String displayName = "";
+            //String path = uri.getPath();
+
+            try {
+                InputStream is = getActivity().getContentResolver().openInputStream(uri);
+                byte[] bytes = IOUtils.toByteArray(is);
+                encode = Base64.encodeToString(bytes,Base64.DEFAULT);
+                Log.e("e",encode);
+
+            }catch (FileNotFoundException e){
+                e.printStackTrace();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+
+            if (uriString.startsWith("content://")) {
+                Cursor cursor = null;
+                try{
+                    cursor = getActivity().getContentResolver().query(uri,null,null,null,null);
+                    if(cursor != null && cursor.moveToFirst()){
+                        displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+                }finally {
+                    cursor.close();
+                }
+
+            } else if (uriString.startsWith("file://")) {
+                displayName = myFile.getName();
+            }
+
+
+            UploadtoServer uploadToServer = new UploadtoServer();
+            uploadToServer.execute(encode,displayName);
+            //Name of the file -> 'displayName' .... Encoded string is 'encode'
+        }
+    }
+    class UploadtoServer extends AsyncTask<String,Void,String>{
+
+        String displayName,encode;
+
+        @Override
+        protected String doInBackground(String... params) {
+            encode = params[0];
+            displayName = params[1];
+            String upload_url = "http://www.tapnget.co.in/upload.php";
+            String line = "", response = null;
+            String userCollegeID = getData(getString(R.string.myPrefCollegeID));
+            try {
+                URL url = new URL(upload_url);
+                HttpURLConnection httpURLConnection =(HttpURLConnection)url.openConnection();
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.setDoInput(true);
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+
+                String data = URLEncoder.encode("college_id","UTF-8")+"="+URLEncoder.encode(userCollegeID,"UTF-8")+"&"+
+                        URLEncoder.encode("displayname","UTF-8")+"="+URLEncoder.encode(displayName,"UTF-8")+"&"+
+                        URLEncoder.encode("encodestring","UTF-8")+"="+URLEncoder.encode(encode,"UTF-8");
+
+                bufferedWriter.write(data);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+
+                InputStream IS = httpURLConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS,"iso-8859-1"));
+                while ((line = bufferedReader.readLine())!=null){
+                    response+=line;
+                }
+
+                bufferedReader.close();
+                IS.close();
+                httpURLConnection.disconnect();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Log.e("IV",response);
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Toast.makeText(getContext(),s,Toast.LENGTH_LONG).show();
+
+        }
+    }
+
+
+       /**  public class UploadToServer extends AsyncTask<String,Void,String>{
+       @Override
+       protected String doInBackground(String... params) {
+       String path=params[0];
+       String displayName=params[1];
+       String upload_url = "http://www.tapnget.co.in/upload.php";
+       String line = "", response = null;
+       String userCollegeID = getData(getString(R.string.myPrefCollegeID));
+       String fileName = path;
+       int serverResponseCode = 0;
+       HttpURLConnection conn = null;
+       DataOutputStream dos = null;
+       String lineEnd = "\r\n";
+       String twoHyphens = "--";
+       String boundary = "*****";
+       int bytesRead, bytesAvailable, bufferSize;
+       byte[] buffer;
+       int maxBufferSize = 1 * 1024 * 1024;
+       File sourceFile = new File(path);
+
+       if (!sourceFile.isFile()) {
+
+       Log.e("uploadFile", "Source File not exist :"+path);
+
+       return "0";
+
+       }
+       else
+       {
+       try {
+
+       // open a URL connection to the Servlet
+       FileInputStream fileInputStream = new FileInputStream(sourceFile);
+       URL url = new URL(upload_url);
+
+       // Open a HTTP  connection to  the URL
+       conn = (HttpURLConnection) url.openConnection();
+       conn.setDoInput(true); // Allow Inputs
+       conn.setDoOutput(true); // Allow Outputs
+       conn.setUseCaches(false); // Don't use a Cached Copy
+       conn.setRequestMethod("POST");
+       conn.setRequestProperty("Connection", "Keep-Alive");
+       conn.setRequestProperty("ENCTYPE", "multipart/form-data");
+       conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+       conn.setRequestProperty("uploaded_file", fileName);
+
+       dos = new DataOutputStream(conn.getOutputStream());
+
+       dos.writeBytes(twoHyphens + boundary + lineEnd);
+       dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\""+ fileName + "\"" + lineEnd);
+
+       dos.writeBytes(lineEnd);
+
+       // create a buffer of  maximum size
+       bytesAvailable = fileInputStream.available();
+
+       bufferSize = Math.min(bytesAvailable, maxBufferSize);
+       buffer = new byte[bufferSize];
+
+       // read file and write it into form...
+       bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+       while (bytesRead > 0) {
+
+       dos.write(buffer, 0, bufferSize);
+       bytesAvailable = fileInputStream.available();
+       bufferSize = Math.min(bytesAvailable, maxBufferSize);
+       bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+       }
+
+       // send multipart form data necesssary after file data...
+       dos.writeBytes(lineEnd);
+       dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+       // Responses from the server (code and message)
+       serverResponseCode = conn.getResponseCode();
+       String serverResponseMessage = conn.getResponseMessage();
+
+       Log.i("uploadFile", "HTTP Response is : "
+       + serverResponseMessage + ": " + serverResponseCode);
+
+       if(serverResponseCode == 200){
+
+       Toast.makeText(getContext(), "File Upload Complete.",
+       Toast.LENGTH_SHORT).show();
+       }
+
+       //close the streams //
+       fileInputStream.close();
+       dos.flush();
+       dos.close();
+
+       } catch (MalformedURLException ex) {
+
+       ex.printStackTrace();
+       Toast.makeText(getContext(), "MalformedURLException",
+       Toast.LENGTH_SHORT).show();
+       Log.e("Upload file to server", "error: " + ex.getMessage(), ex);
+       } catch (Exception e) {
+
+       e.printStackTrace();
+
+       Toast.makeText(getContext(), "Got Exception : see logcat ",
+       Toast.LENGTH_SHORT).show();
+       Log.e("Upload file to server Exception", "Exception : "
+       + e.getMessage(), e);
+       }
+
+       } // End else block
+       return null;
+       }
+       }
+        ***/
+
+    /**** HttpURLConnection httpURLConnection =(HttpURLConnection) url.openConnection();
+     httpURLConnection.setRequestMethod("POST");
+     httpURLConnection.setDoOutput(true);
+     httpURLConnection.setDoInput(true);
+     httpURLConnection.setRequestProperty("Content-Type", "application/json");
+     httpURLConnection.setRequestProperty("Accept", "application/json");
+     httpURLConnection.setRequestProperty("charset", "utf-8");
+     httpURLConnection.setUseCaches (false);
+     OutputStream outputStream = httpURLConnection.getOutputStream();
+     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+     JSONObject jsonObject = new JSONObject();
+     jsonObject.put("imageString", encode);
+     jsonObject.put("imageName",displayName);
+     jsonObject.put("college_id",userCollegeID);
+     String data = jsonObject.toString();
+     bufferedWriter.write(data);
+     bufferedWriter.flush();
+     bufferedWriter.close();
+     outputStream.close();
+
+     InputStream IS = httpURLConnection.getInputStream();
+     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(IS,"iso-8859-1"));
+     while ((line = bufferedReader.readLine())!=null){
+     response+=line;
+     }
+
+     bufferedReader.close();
+     IS.close();
+     httpURLConnection.disconnect();
+     ****/
+    // private String encodeFileToBase64Binary(File file)throws IOException {
+    //int size = (int)file.length();
+
+
+        /*String path = uri.getPath();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        FileInputStream fis;
+        try {
+            fis = ;
+            byte[] buf = new byte[1024];
+            int n;
+            while (-1 != (n = fis.read(buf)))
+                baos.write(buf, 0, n);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        byte[] bbytes = baos.toByteArray();
+            byte[] encoded = Base64.encode(bbytes,Base64.DEFAULT);
+            String encodedString = new String(encoded);
+            return encodedString;*/
+    // }
+
+
+    private void saveData(String dataTitle, String dataValue) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+
+        edit.putString(dataTitle, dataValue);
+        edit.apply();
+    }
+
+    private String getData(String dataTitle) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.myPref), Context.MODE_APPEND);
+        return sharedPreferences.getString(dataTitle, "");
+    }
+
+    private void expandFAB() {
+
+        FrameLayout.LayoutParams layoutParams1 = (FrameLayout.LayoutParams) fabDevice.getLayoutParams();
+        layoutParams1.bottomMargin += (int) (fabDevice.getWidth() * 1.5);
+        fabDevice.setLayoutParams(layoutParams1);
+        fabDevice.startAnimation(show_fab_1);
+        fabDevice.setClickable(true);
+
+        FrameLayout.LayoutParams layoutParams2 = (FrameLayout.LayoutParams) fabScan.getLayoutParams();
+        layoutParams2.topMargin += (int) (fabScan.getWidth() * 1.5);
+        fabScan.setLayoutParams(layoutParams2);
+        fabScan.startAnimation(show_fab_2);
+        fabScan.setClickable(true);
+
+    }
+
+    private void hideFAB() {
+
+        FrameLayout.LayoutParams layoutParams1 = (FrameLayout.LayoutParams) fabDevice.getLayoutParams();
+        layoutParams1.bottomMargin -= (int) (fabDevice.getWidth() * 1.5);
+        fabDevice.setLayoutParams(layoutParams1);
+        fabDevice.startAnimation(hide_fab_1);
+        fabDevice.setClickable(false);
+
+        FrameLayout.LayoutParams layoutParams2 = (FrameLayout.LayoutParams) fabScan.getLayoutParams();
+        layoutParams2.topMargin -= (int) (fabScan.getWidth() * 1.5);
+        fabScan.setLayoutParams(layoutParams2);
+        fabScan.startAnimation(hide_fab_2);
+        fabScan.setClickable(false);
+
+
+    }
+
+}
+<?php
+$db_name="justb4jc_tapnget";
+$mysql_user="justb4jc_root";
+$mysql_pass="root1234";
+$server_name="localhost";
+$con=mysqli_connect($server_name,$mysql_user,$mysql_pass,$db_name);
+if(!$con){
+	die("Error in connection\t". mysqli_connect_error());
+}
+else{
+	//echo"<h3>Database Connection Success... </h3>";
+}
+?>
+
+<?php
+require "init.php";
+
+/**$mail_id=$_POST["user_user_name"];
+$mail_id="2014ucp1005";
+$mail_id.="@mnit.ac.in";
+echo $mail_id;
+FUNCTION TO GENERATE A RANDOM PASSWORD  **/
+
+function generateRandomString($length = 20) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
+}
+
+//GETTING THE NEWLY CREATED PASSWORD
+$newString = generateRandomString();
+
+//UPDATING THE NEWLY CREATED PASSWORD TO THE DATABASE
+$sql = "UPDATE `user_info` SET `Password`='$newString' WHERE `College_id`='$college_id'";
+$check = mysqli_query($con,$sql);
+
+
+//THE MESSAGE VARIABLE THIS IS THE BODY OF THE MESSAGE
+$mssg = "NEW LOGIN CREDENTIALS \n"+"USERNAME: "+$college_id+"\nPASSWORD: "+$newString;
+
+//WRITING HEADERS FOR THE MAIL
+$headers = "From: tapnget <tapnget.co.in>";
+
+//SENDING THE MAIL
+if(mail($mail_id,"Change Password Request",$mssg,$headers)){
+	echo"Email has been sent to".$mail_id;
+}
+else{
+	echo"There was an error sending the email".$mail_id;
+}
+?>
+
+<?php
+require "init.php";
+
+$college_id=$_POST["user_user_name"];
+$user_pass=$_POST["user_user_password"];
+$query = "SELECT * FROM `user_info` WHERE `College_id`='$college_id' AND `Password`='$user_pass'";
+
+$result=mysqli_query($con,$query);
+
+    $response = array(); 
+    
+    while($rows = mysqli_fetch_array($result)){
+        
+		array_push($response,array("username"=>$rows[1],"college_id"=>$rows[2],"number"=>$rows[3],"password"=>$rows[4],"balance"=>$rows[5],));
+		
+	}
+    
+    echo json_encode(array("server_response"=>$response));
+
+	
+?>
+
+<?php
+require "init.php";
+
+$college_id=$_POST["user_user_name"];
+$user_pass=$_POST["user_user_password"];
+
+$query = "SELECT * FROM `user_info` WHERE `College_id`='$college_id' AND `Password`='$user_pass'";
+
+$result=mysqli_query($con,$query);
+
+if(mysqli_num_rows($result)>0){
+	echo "Login Success...";
+}
+else{
+	echo"Login Failed... Try again!";
+}
+
+?>
+
+<?php
+require "init.php";
+$user_name=$_POST["user_username"];
+$college_id=$_POST["user_college_id"];
+$number=$_POST["user_number"];
+$pass=$_POST["user_password"];
+	
+$q = "SELECT * FROM `user_info` WHERE `College_id`='$college_id'";
+
+$res=mysqli_query($con,$q);
+
+if(mysqli_num_rows($res)>0){
+	echo "Registration Failed. User Exists";
+}
+else{
+$query="INSERT INTO `user_info`(`Username`,`College_id`,`Number`, `Password`,`Balance`) VALUES('$user_name','$college_id','$number','$pass','0')";
+
+
+if(mysqli_query($con,$query)){
+	echo"Registration Success";
+}
+else{
+	echo "Data insertion error...".mysqli_error($con);
+}	
+
+}
+?>
+
+<?php
+require "init.php";
+
+$college_id=$_POST["user_user_name"];
+$user_pass=$_POST["user_user_password"];
+$name=$_POST["name"];
+$num =$_POST["user_number"];
+   
+$sql = "UPDATE `user_info` SET `Username`='$name', `Number` = '$num'  WHERE `College_id`='$college_id' AND `Password`='$user_pass'";
+
+$check = mysqli_query($con,$sql);
+
+if($check){
+	echo "UPDATED";
+}
+else{
+	echo "Could not Update";
+}
+
+?>	
+<?php
+require "init.php";
+
+$college_id=$_POST["user_user_name"];
+$user_pass=$_POST["user_user_password"];
+   
+$sql = "UPDATE `user_info` SET `Password`='$user_pass' WHERE `College_id`='$college_id'";
+
+$check = mysqli_query($con,$sql);
+
+if($check){
+	echo "UPDATED";
+}
+else{
+	echo "Could not Update";
+}
+
+<?php
+require_once "init.php";
+
+$college_id=$_POST["college_id"];
+$originalname=$_POST["displayname"];
+$encodedDoc=$_POST["encodestring"];
+
+function generateRandomString($length = 20) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
+}
+
+$str = generateRandomString();
+$decodedDoc= base64_decode["$encodedDoc"];
+
+$newpath ="tapnget.co.in/documents".$str.$originalname;
+if(file_put_contents[$newpath,$decodedDoc]){
+	echo "File Uploaded";
+}
+else{
+	echo "File Upload Error. Try again.";
+}
+
+$query = "INSERT INTO `tapnget_docs`(`user_college_id`,`Document`,`Ref_Code`,`Original_Name`) VALUES('$college_id','$newpath','$str','$originalname')";
+
+mysqli_query($con,$query);
+  
+  ($con,$query);
+
+/**
+require "init.php";
+function generateRandomString($length = 20) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for ($i = 0; $i < $length; $i++) {
+        $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
+}
+
+
+$str = generateRandomString();   
+$file_path ="tapnget.co.in/documents";
+     
+    $file_path = $file_path .$str. basename( $_FILES['uploaded_file']['name']);
+    if(move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $file_path)) {
+        echo "success";
+    } else{
+        echo "fail";
+    }
+	
+	$query = "INSERT INTO `tapnget_docs`(`user_college_id`,`Document`,`Ref_Code`,`Original_Name`) VALUES('$college_id','$newpath','$str','')";
+
+mysqli_query
+**/
+?>
